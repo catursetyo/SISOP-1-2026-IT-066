@@ -56,6 +56,6 @@ END {
         print ("Rata-rata usia penumpang adalah " sprintf("%.0f", total_age / count_passenger) " tahun")
     } 
     else if (opsi == "e") {
-        print "Jumlah penumpang business class ada " business_passenger " orang"
+        print ("Jumlah penumpang business class ada " business_passenger " orang")
     }
 }
