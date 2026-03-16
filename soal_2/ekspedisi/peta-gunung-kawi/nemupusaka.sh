@@ -8,4 +8,6 @@ y2=112.468100
 
 koorX=$(awk "BEGIN {print ($x1 + $x2) / 2}")
 koorY=$(awk "BEGIN {print ($y1 + $y2) / 2}")
-echo -e "Koordinat pusat:\n$koorX, $koorY"
+echo -e "Koordinat pusat:\n$koorX, $koorY" > posisipusaka.txt
+
+cat posisipusaka.txt
