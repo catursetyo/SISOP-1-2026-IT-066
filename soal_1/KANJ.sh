@@ -18,6 +18,8 @@ BEGIN {
 
 # NR buat ignore header atau baris pertama CSV
 NR > 1 && !exit_flag {
+    gsub(/\r/, "", $0) # hapus \r (enter) jadi string kosong 
+
     count_passenger++
     
     carriage[$4] = 1 # gerbong unik
