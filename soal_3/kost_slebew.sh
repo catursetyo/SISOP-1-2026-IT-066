@@ -13,6 +13,11 @@ cleanup() {
 # jalanin fungsi cleanup() diatas
 trap cleanup EXIT SIGINT
 
+data="data/penghuni.csv"
+log="log/tagihan.log"
+rekap="rekap/laporan_bulanan.txt"
+sampah="sampah/history_hapus.csv"
+
 while true; do
     clear
 
@@ -47,6 +52,7 @@ while true; do
 
             while true; do
                 read -p "Masukkan Nama: " nama
+
                 if [[ -z "$nama" ]]; then
                     echo ">>> Error: Nama tidak boleh kosong!"
                 else
@@ -57,16 +63,28 @@ while true; do
             # REVISI LAGEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
             while true; do
                 read -p "Masukkan Nomor Kamar: " kamar
+
                 if [[ ! "$kamar" =~ ^[0-9]+$ ]]; then
                     echo ">>> Error: Nomor kamar sudah diambil!"
-                else
-                    break
+                    continue
                 fi
+
+                if [[ -f "$data" ]]; then
+                    cek_kamar=$(awk -F',' -v kamar="$kamar" '$2 == kamar {print "ketemu"; exit}' "$data")
+
+                    if [[ "$cek_kamar" == "ketemu" ]]; then
+                        echo ">>> Error: Kamar $kamar sudah ada yang menempati! Pilih nomor lain."
+                        continue
+                    fi
+                fi
+
+                break
             done
 
             while true; do
                 read -p "Masukkan Harga Sewa: " harga
-                if [[ ! "$harga" =~ ^[0-9]+$ ]] then
+
+                if [[ ! "$harga" =~ ^[0-9]+$ ]]; then
                     echo ">>> Error: Harga harus berupa bilangan positif!"
                 else
                     break
@@ -80,9 +98,9 @@ while true; do
                 
                 if [[ ! "$tanggal" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
                     echo ">>> Error: Format salah! Gunakan format YYYY-MM-DD."
-                else if ! date -d "$tanggal" &>/dev/null; then
+                elif ! date -d "$tanggal" &>/dev/null; then
                     echo ">>> Error: Tanggal '$tanggal' tidak ada di kalender!"
-                else if [[ "$tanggal" > "$hari_ini" ]]; then
+                elif [[ "$tanggal" > "$hari_ini" ]]; then
                     echo ">>> Error: Tanggal tidak valid! Maksimal adalah hari ini ($hari_ini)."
                 else
                     break
@@ -91,6 +109,7 @@ while true; do
 
             while true; do
                 read -p "Masukkan Status Awal (Aktif/Menunggak): " status
+
                 if [[ ! "$status" =~ ^(Aktif|Menunggak|aktif|menunggak)$ ]]; then
                     echo ">>> Error: Status hanya boleh diisi 'Aktif' atau 'Menunggak'!"
                 else
