@@ -18,6 +18,10 @@ log="log/tagihan.log"
 rekap="rekap/laporan_bulanan.txt"
 sampah="sampah/history_hapus.csv"
 
+if [[ ! -f "$data" ]]; then
+    echo "Nama,No_Kamar,Harga_Sewa,Tanggal_Masuk,Status" > "$data"
+fi
+
 while true; do
     clear
 
