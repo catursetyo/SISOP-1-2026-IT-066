@@ -5,26 +5,75 @@ tput smcup
 
 # bersihin terminal pas keluar (ctrl + c)
 cleanup() {
-    # balik ke terminal awal
     tput rmcup
     exit 0
 }
 
-# jalanin fungsi cleanup() diatas
 trap cleanup EXIT SIGINT
 
-data="data/penghuni.csv"
-log="log/tagihan.log"
-rekap="rekap/laporan_bulanan.txt"
-sampah="sampah/history_hapus.csv"
+data_file="data/penghuni.csv"
+log_file="log/tagihan.log"
+rekap_file="rekap/laporan_bulanan.txt"
+sampah_file="sampah/history_hapus.csv"
 
-if [[ ! -f "$data" ]]; then
-    echo "Nama,No_Kamar,Harga_Sewa,Tanggal_Masuk,Status" > "$data"
-fi
+# inisiasi directory dan file
+init_storage() {
+    mkdir -p "data" "log" "rekap" "sampah"
+
+    [[ -f "$data_file" ]] || echo "Nama,No_Kamar,Harga_Sewa,Tanggal_Masuk,Status" > "$data_file"
+    [[ -f "$log_file" ]] || : > "$log_file"
+    [[ -f "$rekap_file" ]] || : > "$rekap_file"
+    [[ -f "$sampah_file" ]] || echo "Nama,No_Kamar,Harga_Sewa,Tanggal_Masuk,Status,Tanggal_Hapus" > "$sampah_file"
+}
+
+pause() {
+    echo
+    read -r -p "Tekan [ENTER] untuk kembali ke menu..." _
+}
+
+# normalisasi case sensitive 'Aktif' dan 'Menunggak'
+normalize_status() {
+    local input
+    input=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+    case "$input" in
+        aktif) echo "Aktif" ;;
+        menunggak) echo "Menunggak" ;;
+        *) echo "" ;;
+    esac
+}
+
+# ubah angka jadi format rupiah
+rupiah() {
+    local number="$1"
+    if [[ -z "$number" || ! "$number" =~ ^[0-9]+$ ]]; then
+        echo "Rp0"
+        return
+    fi
+
+    local rev formatted=""
+    rev=$(echo "$number" | rev)
+    while [[ -n "$rev" ]]; do
+        formatted+="${rev:0:3}."
+        rev="${rev:3}"
+    done
+    formatted="${formatted%.}"
+    echo "Rp$(echo "$formatted" | rev)"
+}
+
+check_tagihan() {
+    init_storage
+    local now
+    now=$(date '+%Y-%m-%d %H:%M:%S')
+
+    awk -F',' -v now="$now" 'NR > 1 && tolower($5) == "menunggak" {
+        printf "[%s] TAGIHAN: %s (Kamar %s) - Menunggak Rp%s\n", now, $1, $2, $3
+    }' "$DATA_FILE" >> "$LOG_FILE"
+}
 
 while true; do
     clear
 
+main_menu() {
     echo "
  █████╗ ███╗   ███╗██████╗  █████╗ ████████╗██╗   ██╗██╗  ██╗ ██████╗ ███████╗████████╗
 ██╔══██╗████╗ ████║██╔══██╗██╔══██╗╚══██╔══╝██║   ██║██║ ██╔╝██╔═══██╗██╔════╝╚══██╔══╝
@@ -33,18 +82,20 @@ while true; do
 ██║  ██║██║ ╚═╝ ██║██████╔╝██║  ██║   ██║   ╚██████╔╝██║  ██╗╚██████╔╝███████║   ██║   
 ╚═╝  ╚═╝╚═╝     ╚═╝╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝   
 "
-
-    echo "=========================================="
-    echo "ID | OPTIONS"
-    echo "------------------------------------------"
-    echo "1 | Tambah Penghuni Baru"
-    echo "2 | Hapus Penghuni"
-    echo "3 | Tampilkan Daftar Penghuni"
-    echo "4 | Update Status Penghuni"
-    echo "5 | Cetak Laporan Keuangan"
-    echo "6 | Kelola Cron (Pengingat Tagihan)"
-    echo "7 | Exit Program"
-    echo "=========================================="
+echo "=============================================="
+echo "          SISTEM MANAJEMEN AMBAKOST"
+echo "=============================================="
+echo "ID | OPTIONS"
+echo "----------------------------------------------"
+echo " 1 | Tambah Penghuni Baru"
+echo " 2 | Hapus Penghuni"
+echo " 3 | Tampilkan Daftar Penghuni"
+echo " 4 | Update Status Penghuni"
+echo " 5 | Cetak Laporan Keuangan"
+echo " 6 | Kelola Cron (Pengingat Tagihan)"
+echo " 7 | Exit Program"
+echo "=============================================="
+}
 
     read -p "Enter option [1-7]: " opsi
 
