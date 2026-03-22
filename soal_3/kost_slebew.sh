@@ -82,7 +82,7 @@ main_menu() {
 ╚═╝  ╚═╝╚═╝     ╚═╝╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝
 "
     echo "=============================================="
-    echo "         SISTEM MANAJEMEN AMBATUKOST"
+    echo "         SISTEM MANAJEMEN AMBATUKOST          "
     echo "=============================================="
     echo "ID | OPTIONS"
     echo "----------------------------------------------"
@@ -207,7 +207,7 @@ hapus_penghuni() {
 tampilkan_daftar_penghuni() {
     clear
     echo "=============================================================="
-    echo "               DAFTAR PENGHUNI KOST SLEBEW                    "
+    echo "                  DAFTAR PENGHUNI AMBATUKOST                  "
     echo "=============================================================="
 
     if [[ $(wc -l < "$DATA_FILE") -le 1 ]]; then
@@ -283,7 +283,7 @@ update_status_penghuni() {
 cetak_laporan_keuangan() {
     clear
     echo "=============================================================="
-    echo "               LAPORAN KEUANGAN KOST SLEBEW                  "
+    echo "                 LAPORAN KEUANGAN AMBATUKOST                  "
     echo "=============================================================="
 
     local total_aktif total_tunggakan jumlah_kamar daftar_tunggakan harga_raw prefix
@@ -295,7 +295,7 @@ cetak_laporan_keuangan() {
 
     {
         echo "=============================================================="
-        echo "               LAPORAN KEUANGAN KOST SLEBEW                  "
+        echo "                 LAPORAN KEUANGAN AMBATUKOST                  "
         echo "=============================================================="
         echo "Total pemasukan (Aktif) : $(format_rupiah "$total_aktif")"
         echo "Total tunggakan         : $(format_rupiah "$total_tunggakan")"
