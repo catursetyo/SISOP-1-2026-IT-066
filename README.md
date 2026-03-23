@@ -218,3 +218,19 @@ s/[",]//g
 Untuk menghapus semua tanda kutip `"` dan koma `,`
 
 Lalu dilanjutkan menggunakan `awk` untuk mencetak hasil dari `grep` dan `sed` serta memasukkannya ke dalam [titik-penting.txt](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_2/ekspedisi/peta-gunung-kawi/titik-penting.txt).
+
+Sehingga output dari [titik-penting.txt](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_2/ekspedisi/peta-gunung-kawi/titik-penting.txt) yang dihasilkan adalah:
+```
+node_001,Titik Berak Paman Mas Mba,-7.920000,112.450000
+node_002,Basecamp Mas Fuad,-7.920000,112.468100
+node_003,Gerbang Dimensi Keputih,-7.937960,112.468100
+node_004,Tembok Ratapan Keputih,-7.937960,112.450000
+```
+
+Setelah mendapatkan [titik-penting.txt](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_2/ekspedisi/peta-gunung-kawi/titik-penting.txt), sekarang diminta untuk menghitung titik tengah diagonal menggunakan rumus titik tengah persegi.
+
+$$
+(\frac{x1+x2}{2}, \frac{y1+y2}{2})
+$$
+
+Script [nemupusaka.sh](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_2/ekspedisi/peta-gunung-kawi/nemupusaka.sh)
