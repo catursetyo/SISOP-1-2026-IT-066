@@ -33,7 +33,7 @@
     └── sampah/
         └── history_hapus.csv
 ```
-> **Catatan:** Struktur di atas mengikuti format yang diminta pada soal. Namun untuk directory [/assets](https://github.com/catursetyo/SISOP-1-2026-IT-066/tree/main/assets) tidak termasuk ke dalam struktur repository, karena digunakan untuk keperluan laporan pada [README.md](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/README.md).
+> **Note:** Struktur di atas mengikuti format yang diminta pada soal. Namun untuk directory [/assets](https://github.com/catursetyo/SISOP-1-2026-IT-066/tree/main/assets) tidak termasuk ke dalam struktur repository, karena digunakan untuk keperluan laporan pada [README.md](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/README.md).
 
 ---
 
@@ -261,6 +261,12 @@ Diambil titik pertama dan juga ketiga sebagai dua titik diagonal, masing-masing 
 
 Dengan titik pusat yang dihasilkan adalah sebagai berikut:
 
-<img src="soal2-b.png">
+<img src="/assets/soal2-b.png">
 
 ## Soal 3: KOST SLEBEW AMBATUKAM
+
+Pada soal ini, diminta untuk membangun aplikasi CLI interaktif berbasis Bash untuk mengelola data penghuni kost, termasuk tambah/hapus data, menampilkan daftar penghuni, mengubah status pembayaran, mencetak laporan keuangan, dan mengelola cron job pengingat tagihan.
+
+<img src="/assets/soal3-a.png">
+
+> **Note:** Dikarenakan adanya kebebasan artistik, maka dilakukan beberapa penyesuaian untuk tampilan akhir dari program [kost_slebew.sh](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/kost_slebew.sh).
