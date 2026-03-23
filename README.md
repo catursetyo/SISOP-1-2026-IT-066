@@ -119,3 +119,21 @@ else if (opsi == "d") {
     print ("Rata-rata usia penumpang adalah " sprintf("%.0f", total_age / count_passenger) " tahun")
     }
 ```
+Output kemudian dibulatkan agar tidak memiliki angka dibelakang koma menggunakan `sprintf(%.0f)`.
+
+#### Contoh output:
+<img src="/assets/soal1-d.png">
+
+### Sub-soal E
+Pada soal ini, diminta untuk menghitung jumlah penumpang yang memilih Business Class.
+```bash
+NR > 1 && !exit_flag {
+    if ($3 == "Business") {
+        business_passenger++
+    }
+}
+```
+Pada kolom gerbong `$3`, apabila penumpang memilih Business Class, maka nilai dari `business_passenger` akan bertambah 1 setiap penumpang.
+
+#### Contoh output:
+<img src="/assets/soal1-e.png">
