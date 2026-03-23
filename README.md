@@ -89,3 +89,33 @@ Key unik dari `carriage[$4]` dibaca pada loop tersebut dan digunakan untuk mengh
 <img src="/assets/soal1-b.png">
 
 ### Sub-soal C
+Pada soal ini, diminta untuk mencari data penumpang dengan usia paling tua (nama dan usia).
+```bash
+max_age = 0
+
+NR > 1 && !exit_flag {
+    if ($2 > max_age) {
+        max_age = $2
+        oldest = $1
+    }
+}
+```
+`max_age` diinisiasi dengan nilai nol, yang akan digunakan sebagai pembanding untuk mencari usia tertinggi dari kolom `$2`. Nantinya `max_age` akan diupdate dengan nilai usia yang lebih tinggi, serta menyimpan nama penumpang tersebut yang ada di kolom `$1` pada variable `oldest`.
+
+#### Contoh output:
+<img src="/assets/soal1-c.png">
+
+### Sub-soal D
+Pada soal ini, diminta untuk menghitung rata-rata usia seluruh penumpang serta memberikan output tanpa angka di belakang koma.
+```bash
+NR > 1 && !exit_flag {
+    total_age += $2
+}
+```
+`total_age` menghitung jumlah usia seluruh penumpang yang ada pada kolom `$2` setiap kali AWK membaca tiap baris.
+
+```bash
+else if (opsi == "d") {
+    print ("Rata-rata usia penumpang adalah " sprintf("%.0f", total_age / count_passenger) " tahun")
+    }
+```
