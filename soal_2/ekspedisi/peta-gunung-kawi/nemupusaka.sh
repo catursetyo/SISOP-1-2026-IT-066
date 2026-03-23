@@ -5,18 +5,16 @@ output="posisipusaka.txt"
 
 awk -F',' '
 NR == 1 {
-    min_lat = max_lat = $3
-    min_lon = max_lon = $4
+    lat1 = $3
+    lon1 = $4
 }
-{
-    if ($3 < min_lat) min_lat = $3
-    if ($3 > max_lat) max_lat = $3
-    if ($4 < min_lon) min_lon = $4
-    if ($4 > max_lon) max_lon = $4
+NR == 3 {
+    lat2 = $3
+    lon2 = $4
 }
 END {
-    pusat_lat = (min_lat + max_lat) / 2
-    pusat_lon = (min_lon + max_lon) / 2
+    pusat_lat = (lat1 + lat2) / 2
+    pusat_lon = (lon1 + lon2) / 2
     printf "Koordinat pusat:\n%.6f, %.6f\n", pusat_lat, pusat_lon
 }
 ' "$input" > "$output"
