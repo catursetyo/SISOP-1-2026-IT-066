@@ -50,19 +50,42 @@ Contoh penggunaan:
 awk -f KANJ.sh passenger.csv a/b/c/d/e
 ```
 
-- Sub-soal A\
+### Sub-soal A
 Pada soal ini, diminta untuk menghitung jumlah seluruh penumpang (tidak termasuk header).
 ```bash
 NR > 1 && !exit_flag {
     count_passenger++
 }
 ```
-Perintah tersebut membaca baris per baris dari [passenger.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_1/passenger.csv) dan menambah jumlah penumpang sesuai dengan jumlah baris yang dibaca, terkecuali header. Hasil dari `count_passenger++` akan dimasukkan kedalam conditionals yang nantinya digunakan untuk menampilkan output.
+Perintah tersebut membaca baris per baris dari [passenger.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_1/passenger.csv) dan menambah jumlah penumpang sesuai dengan jumlah baris yang dibaca, terkecuali header.
 ```bash
 if (opsi == "a") {
-        print ("Jumlah seluruh penumpang KANJ adalah " count_passenger " orang")
+    print ("Jumlah seluruh penumpang KANJ adalah " count_passenger " orang")
+}
 ```
-
+Hasil dari `count_passenger++` akan dimasukkan kedalam conditionals yang nantinya digunakan untuk menampilkan output.
 
 #### Contoh output:
 <img src="/assets/soal1-a.png">
+
+### Sub-soal B
+Pada soal ini, diminta untuk menghitung berapa banyak jumlah gerbong unik yang digunakan dalam perjalanan tersebut.
+```bash
+NR > 1 && !exit_flag {
+    carriage[$4] = 1
+}
+```
+Array `carriage[]` membaca baris dari gerbong, yaitu `$4`. Sehingga data dari gerbong gerbong tersebut dimasukkan ke dalam array dan diberikan nilai `= 1` sebagai penanda bahwa gerbong tersebut ada.
+```bash
+else if (opsi == "b") {
+    total_carriage = 0
+    for (i in carriage) total_carriage++
+    print ("Jumlah gerbong penumpang KANJ adalah " total_carriage)
+}
+```
+Key unik dari `carriage[$4]` dibaca pada loop tersebut dan digunakan untuk menghitung jumlah dari gerbong unik yang digunakan.
+
+#### Contoh output:
+<img src="/assets/soal1-b.png">
+
+### Sub-soal C
