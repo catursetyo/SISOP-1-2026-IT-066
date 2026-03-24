@@ -425,6 +425,10 @@ tambah_penghuni() {
 `local variable` dideklarasikan pada awal fungsi, seluruh input field dari fungsi tersebut dimasukkan ke dalam infinite loop yang akan terus berulang sampai user memasukkan format input yang tepat.
 
 ```bash
+local nama kamar harga tanggal status hari_ini
+```
+
+```bash
 while true; do
     read -r -p "Masukkan Nama: " nama
     if [[ -z "$nama" ]]; then
@@ -453,7 +457,7 @@ while true; do
 done
 ```
 
-User hanya dapat menginput nomor kamar berupa angka positif. Setelah itu, nomor kamar divalidasi menggunakan `awk` dengan memeriksa kolom kedua pada file [penghuni.csv]((https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv)). Jika nomor kamar ditemukan, maka variabel `dipake` akan diaktifkan, sehingga `awk` memberikan feedback berupa exit status `0`, sehingga pesan error akan muncul.
+User hanya dapat menginput nomor kamar berupa angka positif. Setelah itu, nomor kamar divalidasi menggunakan `awk` dengan memeriksa kolom kedua pada file [penghuni.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv). Jika nomor kamar ditemukan, maka variabel `dipake` akan diaktifkan, sehingga `awk` memberikan feedback berupa exit status `0`, sehingga pesan error akan muncul.
 
 <img src="/assets/soal3-b.png">
 
@@ -508,6 +512,8 @@ normalize_status() {
 
 ### 2. Hapus Penghuni
 
+Fitur ini memberikan kemampuan kepada user untuk menghapus daftar penghuni dari database utama dan memindahkannya ke sampah yang disimpan di [history_hapus.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/sampah/history_hapus.csv) dengan menambahkan kolom `tanggal_hapus`.
+
 ```bash
 hapus_penghuni() {
     clear
@@ -546,7 +552,51 @@ hapus_penghuni() {
 }
 ```
 
+Untuk menghapus data penghuni, user diminta untuk menginput nama dari penghuni yang ingin dihapus, dengan syarat input nama tidak boleh kosong.
+
+```bash
+read -r -p "Masukkan nama penghuni yang akan dihapus: " nama
+
+if [[ -z "$nama" ]]; then
+    echo ">>> Error: Nama tidak boleh kosong!"
+    pause
+    return
+fi
+```
+
+Setelah menginput nama penghuni, `awk` akan mencari data penghuni di [penghuni.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv) berdasarkan nama yang telah diinput sebelumnya.
+```bash
+row=$(awk -F',' -v nama="$nama" 'NR > 1 && tolower($1) == tolower(nama) {print $0; exit}' "$DATA_FILE")
+```
+
+`tolower($1) == tolower(nama)` membandingkan kolom pertama (nama) dengan input user tanpa membedakan huruf besar/kecil, `{print $0; exit}` jika ditemukan, cetak satu baris penuh lalu program akan berhenti.
+
+<img src="/assets/soal3-d.png">
+
+```bash
+hapus_tanggal=$(date +%Y-%m-%d)
+echo "$row,$hapus_tanggal" >> "$SAMPAH_FILE"
+```
+
+Variable `hapus_tanggal` menyimpan tanggal penghapusan data (sekarang), lalu tanggal tersebut dimasukkan ke kolom `Tanggal_Hapus` di [history_hapus.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/sampah/history_hapus.csv).
+
+```bash
+awk -F',' -v nama="$nama" 'BEGIN {OFS=FS}
+    NR == 1 {print; next}
+    tolower($1) == tolower(nama) && found == 0 {found=1; next}
+    {print}
+' "$DATA_FILE" > "$DATA_FILE.tmp" && mv "$DATA_FILE.tmp" "$DATA_FILE"
+```
+
+Demi mencegah adanya error saat proses penghapusan data penghuni, daripada menghapus secara langsung data penghuni dari [penghuni.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv), maka saya membuat temporary file sebagai jembatan untuk mengubah data [penghuni.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv).
+
+`awk` membaca file dengan pemisah koma`,` mempertahankan baris header, kemudian membandingkan kolom pertama dengan variabel `nama` tanpa membedakan huruf besar dan kecil menggunakan `tolower()`. Jika ditemukan kecocokan, baris tersebut dilewati dengan next sehingga tidak ikut ditulis ke output, sedangkan baris lainnya tetap dicetak.
+
+Hasil akhirnya disimpan ke file sementara `$DATA_FILE.tmp`, lalu jika proses berhasil file sementara tersebut menggantikan file asli menggunakan `mv`.
+
 ### 3. Tampilkan Daftar Penghuni
+
+Fitur ini memungkinkan user untuk menampilkan seluruh daftar penghuni yang tersimpan di database utama [penghuni.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv) dalam bentuk tabel, sekaligus menampilkan ringkasan jumlah penghuni berdasarkan statusnya.
 
 ```bash
 tampilkan_daftar_penghuni() {
@@ -583,6 +633,52 @@ tampilkan_daftar_penghuni() {
     pause
 }
 ```
+
+Sebelum data ditampilkan, program akan mengecek terlebih dahulu apakah file [penghuni.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv) hanya berisi header atau belum memiliki data penghuni sama sekali.
+
+```bash
+if [[ $(wc -l < "$DATA_FILE") -le 1 ]]; then
+    echo "Belum ada data penghuni."
+    pause
+    return
+fi
+```
+
+`wc -l` digunakan untuk menghitung jumlah baris pada file. Apabila jumlah baris kurang dari atau sama dengan 1, maka artinya file hanya berisi header dan belum ada data penghuni yang tersimpan. Dalam kondisi tersebut, program akan menampilkan pesan bahwa data penghuni belum tersedia, lalu kembali ke menu sebelumnya.
+
+```bash
+awk -F',' '
+    BEGIN {
+        printf "%-3s | %-20s | %-5s | %-15s | %-10s\n", "No", "Nama", "Kamar", "Harga Sewa", "Status"
+        print "---------------------------------------------------------------------"
+    }
+```
+
+Setelah dipastikan data tersedia, `awk` akan mulai membaca file. Pada blok `BEGIN`, program menampilkan judul kolom tabel berupa nomor urut, nama penghuni, nomor kamar, harga sewa, dan status. Selain itu, dicetak juga garis pemisah agar tampilan tabel lebih terstruktur.
+
+```bash
+NR > 1 {
+    no++
+    aktif += (tolower($5) == "aktif")
+    menunggak += (tolower($5) == "menunggak")
+    harga = $3
+    gsub(/[^0-9]/, "", harga)
+    printf "%-3d | %-20s | %-5s | %-15s | %-10s\n", no, $1, $2, "Rp" harga, $5
+}
+```
+
+Pada bagian ini, `awk` hanya memproses data mulai dari baris kedua agar header file CSV diabaikan. Variabel `no` digunakan sebagai nomor urut setiap penghuni yang ditampilkan. Selanjutnya, program juga menghitung jumlah penghuni dengan status `Aktif` dan `Menunggak` berdasarkan kolom kelima.
+
+Variabel `harga` diambil dari kolom ketiga, lalu dibersihkan menggunakan `gsub(/[^0-9]/, "", harga)` agar hanya menyisakan angka. Setelah itu, setiap data penghuni ditampilkan dalam format tabel menggunakan `printf`, sehingga hasil output menjadi sejajar dan lebih nyaman dibaca di terminal.
+
+```bash
+END {
+    print "---------------------------------------------------------------------"
+    printf "Total: %d penghuni | Aktif: %d | Menunggak: %d\n", no, aktif, menunggak
+}
+```
+
+Pada blok `END`, program menampilkan garis pemisah penutup dan ringkasan data penghuni. Ringkasan tersebut berisi total seluruh penghuni, jumlah penghuni dengan status `Aktif`, serta jumlah penghuni dengan status `Menunggak`.
 
 ### 4. Update Status Penghuni
 
