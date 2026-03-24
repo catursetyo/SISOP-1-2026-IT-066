@@ -350,7 +350,7 @@ tambah_penghuni() {
             continue
         fi
 
-        if awk -F',' -v kamar="$kamar" 'NR > 1 && $2 == kamar {exit 0} END {exit 1}' "$DATA_FILE"; then
+        if awk -F',' -v kamar="$kamar" 'NR > 1 && $2 == kamar {dipake=1} END {exit !dipake}' "$DATA_FILE"; then
             echo ">>> Error: Kamar $kamar sudah ditempati!"
             continue
         fi
@@ -431,3 +431,56 @@ done
 ```
 
 User hanya dapat menginput nomor kamar berupa angka positif. Setelah itu, nomor kamar divalidasi menggunakan `awk` dengan memeriksa kolom kedua pada file [penghuni.csv]((https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv)). Jika nomor kamar ditemukan, maka variabel `dipake` akan diaktifkan, sehingga `awk` memberikan feedback berupa exit status `0`, sehingga pesan error akan muncul.
+
+<img src="/assets/soal3-b.png">
+
+```bash
+while true; do
+    read -r -p "Masukkan Tanggal Masuk (YYYY-MM-DD): " tanggal
+    hari_ini=$(date +%Y-%m-%d)
+
+    if [[ ! "$tanggal" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+        echo ">>> Error: Format tanggal harus YYYY-MM-DD!"
+    elif ! date -d "$tanggal" >/dev/null 2>&1; then
+        echo ">>> Error: Tanggal tidak valid!"
+    elif [[ "$tanggal" > "$hari_ini" ]]; then
+        echo ">>> Error: Tanggal tidak boleh melebihi hari ini ($hari_ini)!"
+    else
+        break
+    fi
+done
+```
+
+Variable `hari_ini` diisi dengan tanggal sistem saat ini, lalu dilakukan validasi format tanggal (YYYY-MM-DD). Apabila format tanggal benar, akan divalidasi kembali apakah tanggal tersebut valid, `date` akan membaca string tanggal dari variable `$tanggal`.
+
+Tanggal yang diinput juga tidak boleh melebihi tanggal sistem saat ini.
+
+<img src="/assets/soal3-c.png">
+
+```bash
+while true; do
+    read -r -p "Masukkan Status Awal (Aktif/Menunggak): " status
+    status=$(normalize_status "$status")
+    if [[ -z "$status" ]]; then
+        echo ">>> Error: Status hanya boleh Aktif atau Menunggak!"
+    else
+        break
+    fi
+done
+```
+
+Pada `status`, user diminta untuk menginput status penghuni (aktif/menunggak), karena bersifat `case-sensitive` input user akan dinormalisasi menggunakan fungsi `normalize_status()`.
+
+```bash
+normalize_status() {
+    local input
+    input=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+    case "$input" in
+        aktif) echo "Aktif" ;;
+        menunggak) echo "Menunggak" ;;
+        *) echo "" ;;
+    esac
+}
+```
+
+### 2. Hapus Penghuni
