@@ -294,6 +294,35 @@ Pada soal ini, diminta untuk membangun aplikasi CLI interaktif berbasis Bash unt
 
 <img src="/assets/soal3-a.png">
 
+```bash
+main_menu() {
+    clear
+    echo "
+ █████╗ ███╗   ███╗██████╗  █████╗ ████████╗██╗   ██╗██╗  ██╗ ██████╗ ███████╗████████╗
+██╔══██╗████╗ ████║██╔══██╗██╔══██╗╚══██╔══╝██║   ██║██║ ██╔╝██╔═══██╗██╔════╝╚══██╔══╝
+███████║██╔████╔██║██████╔╝███████║   ██║   ██║   ██║█████╔╝ ██║   ██║███████╗   ██║
+██╔══██║██║╚██╔╝██║██╔══██╗██╔══██║   ██║   ██║   ██║██╔═██╗ ██║   ██║╚════██║   ██║
+██║  ██║██║ ╚═╝ ██║██████╔╝██║  ██║   ██║   ╚██████╔╝██║  ██╗╚██████╔╝███████║   ██║
+╚═╝  ╚═╝╚═╝     ╚═╝╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝
+"
+    echo "=============================================="
+    echo "         SISTEM MANAJEMEN AMBATUKOST          "
+    echo "=============================================="
+    echo "ID | OPTIONS"
+    echo "----------------------------------------------"
+    echo " 1 | Tambah Penghuni Baru"
+    echo " 2 | Hapus Penghuni"
+    echo " 3 | Tampilkan Daftar Penghuni"
+    echo " 4 | Update Status Penghuni"
+    echo " 5 | Cetak Laporan Keuangan"
+    echo " 6 | Kelola Cron (Pengingat Tagihan)"
+    echo " 7 | Exit Program"
+    echo "=============================================="
+}
+```
+
+Fungsi `main_menu()` digunakan sebagai menu utama dan tampilan awal program saat program pertama kali dijalankan serta sebagai panduan kepada user untuk memberitahukan fitur fitur program tersebut. 
+
 > **Note:** Dikarenakan adanya kebebasan artistik, maka dilakukan beberapa penyesuaian untuk tampilan akhir dari program [kost_slebew.sh](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/kost_slebew.sh).
 
 ```bash
@@ -709,7 +738,7 @@ update_status_penghuni() {
         return
     fi
 
-    if ! awk -F',' -v nama="$nama" 'NR > 1 && tolower($1) == tolower(nama) {exit 0} END {exit 1}' "$DATA_FILE"; then
+    if ! awk -F',' -v nama="$nama" 'NR > 1 && tolower($1) == tolower(nama) {found=1} END {exit !found}' "$DATA_FILE"; then
         echo ">>> Error: Penghuni dengan nama \"$nama\" tidak ditemukan."
         pause
         return
@@ -752,7 +781,7 @@ fi
 Setelah itu, `awk` akan mengecek apakah nama penghuni tersebut ada di [penghuni.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv). Pencarian dilakukan tanpa membedakan huruf besar dan kecil menggunakan `tolower()`.
 
 ```bash
-if ! awk -F',' -v nama="$nama" 'NR > 1 && tolower($1) == tolower(nama) {exit 0} END {exit 1}' "$DATA_FILE"; then
+if ! awk -F',' -v nama="$nama" 'NR > 1 && tolower($1) == tolower(nama) {found=1} END {exit !found}' "$DATA_FILE"; then
     echo ">>> Error: Penghuni dengan nama \"$nama\" tidak ditemukan."
     pause
     return
@@ -872,6 +901,22 @@ Selanjutnya, laporan ditampilkan ke terminal dan disimpan ke file [laporan_bulan
 
 ### 6. Kelola Cron
 
+Fitur ini memberikan kemampuan kepada user untuk mengatur cron job pengingat tagihan secara otomatis. Melalui menu ini, user dapat melihat cron job yang aktif, mendaftarkan cron job baru, dan menghapus cron job pengingat yang sudah terpasang.
+
+```bash
+check_tagihan() {
+    init_storage
+    local now
+    now=$(date '+%Y-%m-%d %H:%M:%S')
+
+    awk -F',' -v now="$now" 'NR > 1 && tolower($5) == "menunggak" {
+        printf "[%s] TAGIHAN: %s (Kamar %s) - Menunggak Rp%s\n", now, $1, $2, $3
+    }' "$DATA_FILE" >> "$LOG_FILE"
+}
+```
+
+Fungsi `check_tagihan()` digunakan untuk mencatat seluruh penghuni yang berstatus `Menunggak` ke file log [tagihan.log](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/log/tagihan.log). Program terlebih dahulu menjalankan `init_storage`, lalu mengambil waktu saat ini, kemudian `awk` membaca [penghuni.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv) dan menuliskan data penghuni yang menunggak ke file log. Fungsi ini nantinya dijalankan oleh cron job secara otomatis.
+
 ```bash
 lihat_cron_aktif() {
     clear
@@ -890,6 +935,8 @@ lihat_cron_aktif() {
     pause
 }
 ```
+
+Fungsi `lihat_cron_aktif()` digunakan untuk menampilkan daftar cron job pengingat tagihan yang sedang aktif. Program mengambil isi crontab user menggunakan `crontab -l`, lalu menyaringnya dengan `grep -F "$SCRIPT_PATH --check-tagihan"` agar hanya cron job milik script ini yang ditampilkan. Jika tidak ada hasil, program akan menampilkan pesan bahwa belum ada cron job aktif.
 
 ```bash
 daftarkan_cron() {
@@ -934,6 +981,16 @@ daftarkan_cron() {
     echo "$cron_line"
     pause
 }
+```
+
+Fungsi `daftarkan_cron()` digunakan untuk menambahkan cron job pengingat tagihan baru. User diminta menginput jam dan menit eksekusi, lalu input tersebut divalidasi agar sesuai rentang waktu yang benar. Setelah itu, program membentuk baris cron dalam format:
+
+```bash
+$menit $jam * * * $SCRIPT_PATH --check-tagihan
+```
+
+Sebelum cron baru didaftarkan, program akan menghapus cron lama yang menjalankan `--check-tagihan` agar tidak terjadi duplikasi. Selanjutnya, cron baru ditulis ke temporary file dan didaftarkan menggunakan `crontab`.
+
 ```bash
 hapus_cron() {
     clear
@@ -959,6 +1016,8 @@ hapus_cron() {
     pause
 }
 ```
+
+Fungsi `hapus_cron()` digunakan untuk menghapus cron job pengingat tagihan yang sudah terpasang. Program terlebih dahulu mengecek apakah cron job tersebut ada. Jika tidak ada, program akan menampilkan pesan bahwa tidak ada cron job yang perlu dihapus. Jika ada, maka seluruh baris cron yang memuat `"$SCRIPT_PATH --check-tagihan"` akan dihapus dari crontab menggunakan temporary file.
 
 ```bash
 kelola_cron() {
@@ -986,16 +1045,75 @@ echo "=================================="
 }
 ```
 
-### 7. Cek Tagihan
+Fungsi `kelola_cron()` berperan sebagai menu utama untuk pengelolaan cron job. Melalui menu ini, user dapat memilih apakah ingin melihat cron yang aktif, mendaftarkan cron baru, menghapus cron, atau kembali ke menu sebelumnya.
+
+### MAIN PROGRAM
+
+Bagian ini merupakan alur utama program yang bertugas menjalankan inisialisasi awal, menampilkan menu utama, membaca input user, lalu mengarahkan program ke fitur yang dipilih. Selain itu, bagian ini juga menangani mode khusus `--check-tagihan` agar script dapat dijalankan langsung oleh cron job tanpa masuk ke menu interaktif.
 
 ```bash
-check_tagihan() {
+main() {
     init_storage
-    local now
-    now=$(date '+%Y-%m-%d %H:%M:%S')
 
-    awk -F',' -v now="$now" 'NR > 1 && tolower($5) == "menunggak" {
-        printf "[%s] TAGIHAN: %s (Kamar %s) - Menunggak Rp%s\n", now, $1, $2, $3
-    }' "$DATA_FILE" >> "$LOG_FILE"
+    while true; do
+        main_menu
+        read -r -p "Enter option [1-7]: " opsi
+
+        case "$opsi" in
+            1) tambah_penghuni ;;
+            2) hapus_penghuni ;;
+            3) tampilkan_daftar_penghuni ;;
+            4) update_status_penghuni ;;
+            5) cetak_laporan_keuangan ;;
+            6) kelola_cron ;;
+            7) echo "Terima kasih. Program selesai."; break ;;
+            *) echo ">>> Error: Pilihan tidak valid!"; pause ;;
+        esac
+    done
 }
+
+if [[ "$1" == "--check-tagihan" ]]; then
+    check_tagihan
+    exit 0
+fi
+
+main
 ```
+
+Program akan memulai fungsi `main()` dengan menjalankan `init_storage` terlebih dahulu. Fungsi ini memastikan seluruh folder dan file yang dibutuhkan program sudah tersedia sebelum fitur lain dijalankan.
+
+Setelah itu, program masuk ke dalam perulangan `while true` agar menu utama terus ditampilkan sampai user memilih keluar dari program.
+
+```bash
+while true; do
+    main_menu
+    read -r -p "Enter option [1-7]: " opsi
+```
+
+Input user kemudian diproses menggunakan `case`, sehingga setiap angka akan diarahkan ke fitur yang sesuai. Jika user memilih `7`, program akan menampilkan pesan selesai lalu keluar dari perulangan. Jika input tidak valid, program akan menampilkan pesan error.
+
+```bash
+case "$opsi" in
+    1) tambah_penghuni ;;
+    2) hapus_penghuni ;;
+    3) tampilkan_daftar_penghuni ;;
+    4) update_status_penghuni ;;
+    5) cetak_laporan_keuangan ;;
+    6) kelola_cron ;;
+    7) echo "Terima kasih. Program selesai."; break ;;
+    *) echo ">>> Error: Pilihan tidak valid!"; pause ;;
+esac
+```
+
+Di luar fungsi `main()`, terdapat pengecekan argumen khusus `--check-tagihan`. Jika script dijalankan dengan argumen tersebut, maka program akan langsung menjalankan fungsi `check_tagihan` dan berhenti tanpa menampilkan menu utama.
+
+```bash
+if [[ "$1" == "--check-tagihan" ]]; then
+    check_tagihan
+    exit 0
+fi
+```
+
+Jika tidak ada argumen khusus, maka program akan berjalan normal melalui fungsi `main`.
+
+Script lengkap untuk soal 3, dapat dilihat pada [kost_slebew.sh](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/kost_slebew.sh)

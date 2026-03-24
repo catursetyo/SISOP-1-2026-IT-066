@@ -253,7 +253,7 @@ update_status_penghuni() {
         return
     fi
 
-    if ! awk -F',' -v nama="$nama" 'NR > 1 && tolower($1) == tolower(nama) {exit 0} END {exit 1}' "$DATA_FILE"; then
+    if ! awk -F',' -v nama="$nama" 'NR > 1 && tolower($1) == tolower(nama) {found=1} END {exit !found}' "$DATA_FILE"; then
         echo ">>> Error: Penghuni dengan nama \"$nama\" tidak ditemukan."
         pause
         return
