@@ -309,6 +309,15 @@ trap cleanup EXIT SIGINT
 
 Digunakan untuk menampilkan program [kost_slebew.sh](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/kost_slebew.sh) dalam alternate screen, sehingga tampilan dari program tersebut terlihat lebih rapi.
 
+```bash
+pause() {
+    echo
+    read -r -p "Tekan [ENTER] untuk kembali ke menu..." _
+}
+```
+
+Fungsi `pause()` digunakan untuk memberikan jeda sebelum program kembali ke menu utama. Program akan menampilkan pesan **"Tekan [ENTER] untuk kembali ke menu..."**, lalu menunggu user menekan tombol `ENTER`. Input tersebut disimpan ke variabel sementara `_` dan tidak digunakan lagi, sehingga fungsi ini hanya berperan sebagai penahan tampilan agar output sebelumnya bisa dibaca terlebih dahulu oleh user.
+
 ### Inisialisasi Database
 
 Karena program ini mengharuskan data penghuni tersimpan dalam database lokal, maka diperlukan inisialisasi file dan directory untuk databasenya.
@@ -819,6 +828,46 @@ cetak_laporan_keuangan() {
     echo "[✓] Laporan berhasil disimpan ke $REKAP_FILE"
     pause
 }
+```
+
+Untuk membuat laporan keuangan, program terlebih dahulu menghitung total pemasukan dari penghuni dengan status `Aktif`, total tunggakan dari penghuni dengan status `Menunggak`, jumlah kamar yang terisi, serta daftar nama penghuni yang masih menunggak.
+
+```bash
+total_aktif=$(awk -F',' 'NR > 1 && tolower($5) == "aktif" {sum += $3} END {print sum + 0}' "$DATA_FILE")
+total_tunggakan=$(awk -F',' 'NR > 1 && tolower($5) == "menunggak" {sum += $3} END {print sum + 0}' "$DATA_FILE")
+jumlah_kamar=$(awk -F',' 'NR > 1 {count++} END {print count + 0}' "$DATA_FILE")
+daftar_tunggakan=$(awk -F',' 'NR > 1 && tolower($5) == "menunggak" {printf "- %s (Kamar %s): %s\n", $1, $2, $3}' "$DATA_FILE")
+```
+
+`awk` membaca file [penghuni.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv), kolom kelima digunakan untuk mengecek status penghuni, sedangkan kolom ketiga digunakan sebagai nilai harga sewa.
+
+Agar nominal lebih mudah dibaca, program menggunakan fungsi format_rupiah() untuk mengubah angka biasa menjadi format mata uang rupiah.
+
+```bash
+format_rupiah() {
+    local number="$1"
+    if [[ -z "$number" || ! "$number" =~ ^[0-9]+$ ]]; then
+        echo "Rp0"
+        return
+    fi
+
+    local rev formatted=""
+    rev=$(echo "$number" | rev)
+    while [[ -n "$rev" ]]; do
+        formatted+="${rev:0:3}."
+        rev="${rev:3}"
+    done
+    formatted="${formatted%.}"
+    echo "Rp$(echo "$formatted" | rev)"
+}
+```
+
+Fungsi tersebut memformat angka dengan menambahkan awalan `Rp` dan pemisah ribuan `.`. Contohnya, `500000` akan menjadi `Rp500.000`.
+
+Selanjutnya, laporan ditampilkan ke terminal dan disimpan ke file [laporan_bulanan.txt](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/rekap/laporan_bulanan.txt) menggunakan `tee`.
+
+```bash
+{ ... } | tee "$REKAP_FILE"
 ```
 
 ### 6. Kelola Cron
