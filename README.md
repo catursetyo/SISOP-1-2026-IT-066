@@ -484,3 +484,298 @@ normalize_status() {
 ```
 
 ### 2. Hapus Penghuni
+
+```bash
+hapus_penghuni() {
+    clear
+    echo "=============================================="
+    echo "                HAPUS PENGHUNI                "
+    echo "=============================================="
+
+    local nama hapus_tanggal row
+    read -r -p "Masukkan nama penghuni yang akan dihapus: " nama
+
+    if [[ -z "$nama" ]]; then
+        echo ">>> Error: Nama tidak boleh kosong!"
+        pause
+        return
+    fi
+
+    row=$(awk -F',' -v nama="$nama" 'NR > 1 && tolower($1) == tolower(nama) {print $0; exit}' "$DATA_FILE")
+    if [[ -z "$row" ]]; then
+        echo ">>> Error: Penghuni dengan nama \"$nama\" tidak ditemukan."
+        pause
+        return
+    fi
+
+    hapus_tanggal=$(date +%Y-%m-%d)
+    echo "$row,$hapus_tanggal" >> "$SAMPAH_FILE"
+
+    awk -F',' -v nama="$nama" 'BEGIN {OFS=FS}
+        NR == 1 {print; next}
+        tolower($1) == tolower(nama) && found == 0 {found=1; next}
+        {print}
+    ' "$DATA_FILE" > "$DATA_FILE.tmp" && mv "$DATA_FILE.tmp" "$DATA_FILE"
+
+    echo
+    echo "[✓] Data penghuni \"$nama\" berhasil diarsipkan ke $SAMPAH_FILE dan dihapus dari sistem."
+    pause
+}
+```
+
+### 3. Tampilkan Daftar Penghuni
+
+```bash
+tampilkan_daftar_penghuni() {
+    clear
+    echo "=============================================================="
+    echo "                  DAFTAR PENGHUNI AMBATUKOST                  "
+    echo "=============================================================="
+
+    if [[ $(wc -l < "$DATA_FILE") -le 1 ]]; then
+        echo "Belum ada data penghuni."
+        pause
+        return
+    fi
+
+    awk -F',' '
+        BEGIN {
+            printf "%-3s | %-20s | %-5s | %-15s | %-10s\n", "No", "Nama", "Kamar", "Harga Sewa", "Status"
+            print "---------------------------------------------------------------------"
+        }
+        NR > 1 {
+            no++
+            aktif += (tolower($5) == "aktif")
+            menunggak += (tolower($5) == "menunggak")
+            harga = $3
+            gsub(/[^0-9]/, "", harga)
+            printf "%-3d | %-20s | %-5s | %-15s | %-10s\n", no, $1, $2, "Rp" harga, $5
+        }
+        END {
+            print "---------------------------------------------------------------------"
+            printf "Total: %d penghuni | Aktif: %d | Menunggak: %d\n", no, aktif, menunggak
+        }
+    ' "$DATA_FILE"
+
+    pause
+}
+```
+
+### 4. Update Status Penghuni
+
+```bash
+update_status_penghuni() {
+    clear
+    echo "=============================================="
+    echo "                UPDATE STATUS                 "
+    echo "=============================================="
+
+    local nama status_baru
+    read -r -p "Masukkan Nama Penghuni: " nama
+
+    if [[ -z "$nama" ]]; then
+        echo ">>> Error: Nama tidak boleh kosong!"
+        pause
+        return
+    fi
+
+    if ! awk -F',' -v nama="$nama" 'NR > 1 && tolower($1) == tolower(nama) {exit 0} END {exit 1}' "$DATA_FILE"; then
+        echo ">>> Error: Penghuni dengan nama \"$nama\" tidak ditemukan."
+        pause
+        return
+    fi
+
+    while true; do
+        read -r -p "Masukkan Status Baru (Aktif/Menunggak): " status_baru
+        status_baru=$(normalize_status "$status_baru")
+        if [[ -z "$status_baru" ]]; then
+            echo ">>> Error: Status hanya boleh Aktif atau Menunggak!"
+        else
+            break
+        fi
+    done
+
+    awk -F',' -v nama="$nama" -v status_baru="$status_baru" 'BEGIN {OFS=FS}
+        NR == 1 {print; next}
+        tolower($1) == tolower(nama) {$5 = status_baru}
+        {print}
+    ' "$DATA_FILE" > "$DATA_FILE.tmp" && mv "$DATA_FILE.tmp" "$DATA_FILE"
+
+    echo
+    echo "[✓] Status penghuni \"$nama\" berhasil diubah menjadi: $status_baru"
+    pause
+}
+```
+
+### 5. Cetak Laporan Keuangan
+
+```bash
+cetak_laporan_keuangan() {
+    clear
+    echo "=============================================================="
+    echo "                 LAPORAN KEUANGAN AMBATUKOST                  "
+    echo "=============================================================="
+
+    local total_aktif total_tunggakan jumlah_kamar daftar_tunggakan harga_raw prefix
+
+    total_aktif=$(awk -F',' 'NR > 1 && tolower($5) == "aktif" {sum += $3} END {print sum + 0}' "$DATA_FILE")
+    total_tunggakan=$(awk -F',' 'NR > 1 && tolower($5) == "menunggak" {sum += $3} END {print sum + 0}' "$DATA_FILE")
+    jumlah_kamar=$(awk -F',' 'NR > 1 {count++} END {print count + 0}' "$DATA_FILE")
+    daftar_tunggakan=$(awk -F',' 'NR > 1 && tolower($5) == "menunggak" {printf "- %s (Kamar %s): %s\n", $1, $2, $3}' "$DATA_FILE")
+
+    {
+        echo "=============================================================="
+        echo "                 LAPORAN KEUANGAN AMBATUKOST                  "
+        echo "=============================================================="
+        echo "Total pemasukan (Aktif) : $(format_rupiah "$total_aktif")"
+        echo "Total tunggakan         : $(format_rupiah "$total_tunggakan")"
+        echo "Jumlah kamar terisi     : $jumlah_kamar"
+        echo "--------------------------------------------------------------"
+        echo "Daftar penghuni menunggak:"
+        if [[ -n "$daftar_tunggakan" ]]; then
+            while IFS= read -r line; do
+                harga_raw=$(echo "$line" | awk -F': ' '{print $2}')
+                prefix=$(echo "$line" | awk -F': ' '{print $1}')
+                echo "$prefix: $(format_rupiah "$harga_raw")"
+            done <<< "$daftar_tunggakan"
+        else
+            echo "Tidak ada tunggakan."
+        fi
+        echo "=============================================================="
+    } | tee "$REKAP_FILE"
+
+    echo
+    echo "[✓] Laporan berhasil disimpan ke $REKAP_FILE"
+    pause
+}
+```
+
+### 6. Kelola Cron
+
+```bash
+lihat_cron_aktif() {
+    clear
+    echo "=============================================="
+    echo "            DAFTAR CRON JOB AKTIF            "
+    echo "=============================================="
+
+    local jobs
+    jobs=$(crontab -l 2>/dev/null | grep -F "$SCRIPT_PATH --check-tagihan")
+
+    if [[ -z "$jobs" ]]; then
+        echo "Belum ada cron job pengingat tagihan yang aktif."
+    else
+        echo "$jobs"
+    fi
+    pause
+}
+```
+
+```bash
+daftarkan_cron() {
+    clear
+    echo "=============================================="
+    echo "         DAFTARKAN CRON JOB PENGINGAT         "
+    echo "=============================================="
+
+    local jam menit cron_line temp_file
+
+    while true; do
+        read -r -p "Masukkan Jam (0-23) [default 07]: " jam
+        jam=${jam:-07}
+        if [[ "$jam" =~ ^([0-9]|0[0-9]|1[0-9]|2[0-3])$ ]]; then
+            jam=$(printf '%02d' "$jam")
+            break
+        else
+            echo ">>> Error: Jam harus berada pada rentang 0-23."
+        fi
+    done
+
+    while true; do
+        read -r -p "Masukkan Menit (0-59) [default 00]: " menit
+        menit=${menit:-00}
+        if [[ "$menit" =~ ^([0-9]|0[0-9]|[1-5][0-9])$ ]]; then
+            menit=$(printf '%02d' "$menit")
+            break
+        else
+            echo ">>> Error: Menit harus berada pada rentang 0-59."
+        fi
+    done
+
+    cron_line="$menit $jam * * * $SCRIPT_PATH --check-tagihan"
+    temp_file=$(mktemp)
+    crontab -l 2>/dev/null | grep -v -F "$SCRIPT_PATH --check-tagihan" > "$temp_file" || true
+    echo "$cron_line" >> "$temp_file"
+    crontab "$temp_file"
+    rm -f "$temp_file"
+
+    echo
+    echo "[✓] Cron job pengingat tagihan berhasil didaftarkan."
+    echo "$cron_line"
+    pause
+}
+```bash
+hapus_cron() {
+    clear
+    echo "=============================================="
+    echo "          HAPUS CRON JOB PENGINGAT            "
+    echo "=============================================="
+
+    local temp_file existing
+    existing=$(crontab -l 2>/dev/null | grep -F "$SCRIPT_PATH --check-tagihan")
+
+    if [[ -z "$existing" ]]; then
+        echo "Tidak ada cron job pengingat yang perlu dihapus."
+        pause
+        return
+    fi
+
+    temp_file=$(mktemp)
+    crontab -l 2>/dev/null | grep -v -F "$SCRIPT_PATH --check-tagihan" > "$temp_file" || true
+    crontab "$temp_file"
+    rm -f "$temp_file"
+
+    echo "[✓] Cron job pengingat tagihan berhasil dihapus."
+    pause
+}
+```
+
+```bash
+kelola_cron() {
+    local pilih
+    while true; do
+        clear
+echo "=================================="
+echo "         MENU KELOLA CRON"
+echo "=================================="
+echo "1. Lihat Cron Job Aktif"
+echo "2. Daftarkan Cron Job Pengingat"
+echo "3. Hapus Cron Job Pengingat"
+echo "4. Kembali"
+echo "=================================="
+
+        read -r -p "Pilih [1-4]: " pilih
+        case "$pilih" in
+            1) lihat_cron_aktif ;;
+            2) daftarkan_cron ;;
+            3) hapus_cron ;;
+            4) break ;;
+            *) echo ">>> Error: Pilihan tidak valid!"; pause ;;
+        esac
+    done
+}
+```
+
+### 7. Cek Tagihan
+
+```bash
+check_tagihan() {
+    init_storage
+    local now
+    now=$(date '+%Y-%m-%d %H:%M:%S')
+
+    awk -F',' -v now="$now" 'NR > 1 && tolower($5) == "menunggak" {
+        printf "[%s] TAGIHAN: %s (Kamar %s) - Menunggak Rp%s\n", now, $1, $2, $3
+    }' "$DATA_FILE" >> "$LOG_FILE"
+}
+```
