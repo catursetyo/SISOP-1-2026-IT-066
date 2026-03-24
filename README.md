@@ -682,6 +682,8 @@ Pada blok `END`, program menampilkan garis pemisah penutup dan ringkasan data pe
 
 ### 4. Update Status Penghuni
 
+Fitur ini memberikan kemampuan kepada user untuk mengubah status penghuni pada database utama [penghuni.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv), misalnya dari `Aktif` menjadi `Menunggak` atau sebaliknya.
+
 ```bash
 update_status_penghuni() {
     clear
@@ -726,7 +728,57 @@ update_status_penghuni() {
 }
 ```
 
+Untuk mengubah status penghuni, user diminta menginput nama penghuni terlebih dahulu. Input nama tidak boleh kosong.
+
+```bash
+read -r -p "Masukkan Nama Penghuni: " nama
+
+if [[ -z "$nama" ]]; then
+    echo ">>> Error: Nama tidak boleh kosong!"
+    pause
+    return
+fi
+```
+
+Setelah itu, `awk` akan mengecek apakah nama penghuni tersebut ada di [penghuni.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv). Pencarian dilakukan tanpa membedakan huruf besar dan kecil menggunakan `tolower()`.
+
+```bash
+if ! awk -F',' -v nama="$nama" 'NR > 1 && tolower($1) == tolower(nama) {exit 0} END {exit 1}' "$DATA_FILE"; then
+    echo ">>> Error: Penghuni dengan nama \"$nama\" tidak ditemukan."
+    pause
+    return
+fi
+```
+
+Jika nama ditemukan, user diminta memasukkan status baru. Input status akan dinormalisasi menggunakan fungsi `normalize_status`, sehingga hanya nilai `Aktif` atau `Menunggak` yang diterima.
+
+```bash
+while true; do
+    read -r -p "Masukkan Status Baru (Aktif/Menunggak): " status_baru
+    status_baru=$(normalize_status "$status_baru")
+    if [[ -z "$status_baru" ]]; then
+        echo ">>> Error: Status hanya boleh Aktif atau Menunggak!"
+    else
+        break
+    fi
+done
+```
+
+Selanjutnya, `awk` akan menulis ulang file [penghuni.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv) melalui file sementara. Jika nama penghuni cocok, maka kolom kelima (status) akan diganti dengan nilai `status_baru`, sedangkan data lainnya tetap dipertahankan.
+
+```bash
+awk -F',' -v nama="$nama" -v status_baru="$status_baru" 'BEGIN {OFS=FS}
+    NR == 1 {print; next}
+    tolower($1) == tolower(nama) {$5 = status_baru}
+    {print}
+' "$DATA_FILE" > "$DATA_FILE.tmp" && mv "$DATA_FILE.tmp" "$DATA_FILE"
+```
+
+Dengan demikian, status penghuni berhasil diperbarui secara aman tanpa mengubah struktur file asli secara langsung. Jika proses berhasil, program akan menampilkan pesan konfirmasi kepada user.
+
 ### 5. Cetak Laporan Keuangan
+
+Fitur ini memberikan kemampuan kepada user untuk menampilkan sekaligus menyimpan laporan keuangan kost berdasarkan data pada [penghuni.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv) ke dalam file rekap [laporan_bulanan.txt](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/rekap/laporan_bulanan.txt).
 
 ```bash
 cetak_laporan_keuangan() {
