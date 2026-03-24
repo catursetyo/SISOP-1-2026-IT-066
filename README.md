@@ -160,7 +160,9 @@ Sehingga, berdasarkan data dari [passenger.csv](https://github.com/catursetyo/SI
 
 Pada soal ini, diminta untuk mengekstrak data koordinat dari file [gsxtrack.json](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_2/ekspedisi/peta-gunung-kawi/gsxtrack.json), menyusunnya ke file [titik-penting.txt](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_2/ekspedisi/peta-gunung-kawi/titik-penting.txt), lalu menghitung koordinat pusat untuk memperoleh lokasi pusaka dan menyimpannya pada file [posisipusaka.txt](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_2/ekspedisi/peta-gunung-kawi/posisipusaka.txt).
 
-Pada langkah pertama, diminta untuk mendownload file [peta-ekspedisi-amba.pdf](https://drive.google.com/uc?id=1q10pHSC3KFfvEiCN3V6PTroPR7YGHF6Q) menggunakan `gdown`. Untuk menginstall `gdown` dapat dilakukan dengan menginisiasi python venv.
+Pada langkah pertama, diminta untuk mendownload file [peta-ekspedisi-amba.pdf](https://drive.google.com/uc?id=1q10pHSC3KFfvEiCN3V6PTroPR7YGHF6Q) menggunakan `gdown`.
+
+Meskipun saya tidak tau mengapa harus menggunakan `gdown` padahal terdapat alternatif lain. Untuk menginstall `gdown` dapat dilakukan dengan menginisiasi python venv.
 ```bash
 python3 -m venv env
 source env/bin/activate
@@ -270,3 +272,107 @@ Pada soal ini, diminta untuk membangun aplikasi CLI interaktif berbasis Bash unt
 <img src="/assets/soal3-a.png">
 
 > **Note:** Dikarenakan adanya kebebasan artistik, maka dilakukan beberapa penyesuaian untuk tampilan akhir dari program [kost_slebew.sh](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/kost_slebew.sh).
+
+```bash
+tput smcup
+
+cleanup() {
+    tput rmcup
+    exit 0
+}
+
+trap cleanup EXIT SIGINT
+```
+
+Digunakan untuk menampilkan program [kost_slebew.sh](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/kost_slebew.sh) dalam alternate screen, sehingga tampilan dari program tersebut terlihat lebih rapi.
+
+### Inisialisasi Database
+
+
+
+### Implementasi Fitur
+
+Terdapat beberapa fitur yang harus diimplementasikan ke dalam program [kost_slebew.sh](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/kost_slebew.sh), diantara lain:
+
+### 1. Tambah Penghuni Baru
+
+Pada fitur ini, terdapat beberapa rules yang harus diterapkan pada program, yaitu:
+
+ - Input: nama, nomor kamar, harga sewa, tanggal masuk, status.
+ - Validasi: nomor kamar harus unik (tidak boleh bentrok), harga harus positif, tanggal valid dan tidak melebihi hari ini, status harus `Aktif` atau `Menunggak`.
+
+Lalu saya menambahkan validasi untuk input field tidak boleh kosong.
+
+```bash
+tambah_penghuni() {
+    clear
+    echo "=============================================="
+    echo "               TAMBAH PENGHUNI                "
+    echo "=============================================="
+
+    local nama kamar harga tanggal status hari_ini
+
+    while true; do
+        read -r -p "Masukkan Nama: " nama
+        if [[ -z "$nama" ]]; then
+            echo ">>> Error: Nama tidak boleh kosong!"
+        else
+            break
+        fi
+    done
+
+    while true; do
+        read -r -p "Masukkan Kamar: " kamar
+        if [[ ! "$kamar" =~ ^[0-9]+$ ]]; then
+            echo ">>> Error: Nomor kamar harus berupa angka positif!"
+            continue
+        fi
+
+        if awk -F',' -v kamar="$kamar" 'NR > 1 && $2 == kamar {exit 0} END {exit 1}' "$DATA_FILE"; then
+            echo ">>> Error: Kamar $kamar sudah ditempati!"
+            continue
+        fi
+        break
+    done
+
+    while true; do
+        read -r -p "Masukkan Harga Sewa: " harga
+        if [[ ! "$harga" =~ ^[1-9][0-9]*$ ]]; then
+            echo ">>> Error: Harga sewa harus berupa angka positif!"
+        else
+            break
+        fi
+    done
+
+    while true; do
+        read -r -p "Masukkan Tanggal Masuk (YYYY-MM-DD): " tanggal
+        hari_ini=$(date +%Y-%m-%d)
+
+        if [[ ! "$tanggal" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo ">>> Error: Format tanggal harus YYYY-MM-DD!"
+        elif ! date -d "$tanggal" >/dev/null 2>&1; then
+            echo ">>> Error: Tanggal tidak valid!"
+        elif [[ "$tanggal" > "$hari_ini" ]]; then
+            echo ">>> Error: Tanggal tidak boleh melebihi hari ini ($hari_ini)!"
+        else
+            break
+        fi
+    done
+
+    while true; do
+        read -r -p "Masukkan Status Awal (Aktif/Menunggak): " status
+        status=$(normalize_status "$status")
+        if [[ -z "$status" ]]; then
+            echo ">>> Error: Status hanya boleh Aktif atau Menunggak!"
+        else
+            break
+        fi
+    done
+
+    printf '%s,%s,%s,%s,%s\n' "$nama" "$kamar" "$harga" "$tanggal" "$status" >> "$DATA_FILE"
+
+    echo
+    echo "[✓] Penghuni \"$nama\" berhasil ditambahkan ke Kamar $kamar dengan status $status."
+    pause
+}
+```
