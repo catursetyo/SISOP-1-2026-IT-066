@@ -51,7 +51,27 @@ Seluruh interaksi pada soal 1 dapat dilakukan dengan mengeksekusi file [KANJ.sh]
 - **d** → menghitung rata-rata usia penumpang.
 - **e** → menghitung jumlah penumpang kelas Business.
 
+```awk
+FS = ","
+opsi = ARGV[2]
+```
+
+`FS` digunakan untuk memberitahu `awk` bahwa pemisah antar kolom adalah koma `,` sedangkan `ARGV[2]` mengambil argumen kedua dari `awk` yang akan digunakan sebagai opsi (a, b, c, d, atau e).
+
 Selain itu, script juga memiliki validasi input agar hanya menerima opsi `a`, `b`, `c`, `d`, atau `e`.
+```awk
+if (opsi != "a" && opsi != "b" && opsi != "c" && opsi != "d" && opsi != "e") {
+    print ("Soal tidak dikenali. Gunakan a, b, c, d, atau e.")
+    print ("Contoh penggunaan: awk -f file.sh data.csv a")
+    exit 1
+}
+```
+
+```awk
+delete ARGV[2]
+```
+
+Setelah mengambil argumen kedua dan divalidasi, maka argumen kedua dihapus supaya `awk` tidak menganggapnya sebagai sebuah file.
 
 Contoh penggunaan:
 ```bash
@@ -61,17 +81,17 @@ awk -f KANJ.sh passenger.csv a/b/c/d/e
 ### Sub-soal A
 Pada soal ini, diminta untuk menghitung jumlah seluruh penumpang (tidak termasuk header).
 ```bash
-NR > 1 && !exit_flag {
-    count_passenger++
+NR > 1 {
+    jml_penumpang++
 }
 ```
 Perintah tersebut membaca baris per baris dari [passenger.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_1/passenger.csv) dan menambah jumlah penumpang sesuai dengan jumlah baris yang dibaca, terkecuali header.
 ```bash
 if (opsi == "a") {
-    print ("Jumlah seluruh penumpang KANJ adalah " count_passenger " orang")
+    print ("Jumlah seluruh penumpang KANJ adalah " jml_penumpang " orang")
 }
 ```
-Hasil dari `count_passenger++` akan dimasukkan kedalam conditionals yang nantinya digunakan untuk menampilkan output.
+Hasil dari `jml_penumpang++` akan dimasukkan kedalam conditionals yang nantinya digunakan untuk menampilkan output.
 
 #### Contoh output:
 <img src="/assets/soal1-a.png">
@@ -79,19 +99,22 @@ Hasil dari `count_passenger++` akan dimasukkan kedalam conditionals yang nantiny
 ### Sub-soal B
 Pada soal ini, diminta untuk menghitung berapa banyak jumlah gerbong unik yang digunakan dalam perjalanan tersebut.
 ```bash
-NR > 1 && !exit_flag {
-    carriage[$4] = 1
+NR > 1 {
+    gsub(/\r/, "", $0)
+    gerbong_unik[$4] = 1
 }
 ```
-Array `carriage[]` membaca baris dari gerbong, yaitu `$4`. Sehingga data dari gerbong gerbong tersebut dimasukkan ke dalam array dan diberikan nilai `= 1` sebagai penanda bahwa gerbong tersebut ada.
+Array `gerbong_unik[]` membaca baris dari gerbong, yaitu `$4`. Sehingga data dari gerbong gerbong tersebut dimasukkan ke dalam array dan diberikan nilai `= 1` sebagai penanda bahwa gerbong tersebut ada.
+
+Dikarenakan adanya nilai `enter` pada [passenger.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_1/passenger.csv), `gsub` digunakan untuk menghapus nilai tersebut, sehingga `awk` tidak salah dalam menghitung jumlah gerbong.
 ```bash
 else if (opsi == "b") {
-    total_carriage = 0
-    for (i in carriage) total_carriage++
-    print ("Jumlah gerbong penumpang KANJ adalah " total_carriage)
+    jml_gerbong = 0
+    for (i in gerbong_unik) jml_gerbong++
+    print ("Jumlah gerbong penumpang KANJ adalah " jml_gerbong)
 }
 ```
-Key unik dari `carriage[$4]` dibaca pada loop tersebut dan digunakan untuk menghitung jumlah dari gerbong unik yang digunakan.
+Key unik dari `gerbong_unik[$4]` dibaca pada loop tersebut dan digunakan untuk menghitung jumlah dari gerbong unik yang digunakan.
 
 #### Contoh output:
 <img src="/assets/soal1-b.png">
@@ -99,17 +122,17 @@ Key unik dari `carriage[$4]` dibaca pada loop tersebut dan digunakan untuk mengh
 ### Sub-soal C
 Pada soal ini, diminta untuk mencari data penumpang dengan usia paling tua (nama dan usia).
 ```bash
-max_age = 0
+umur_max = 0
 
-NR > 1 && !exit_flag {
-    if ($2 > max_age) {
-        max_age = $2
-        oldest = $1
+NR > 1 {
+    if ($2 > umur_max) {
+        umur_max = $2
+        tuwir = $1
     }
 }
 ```
 
-`max_age` diinisiasi dengan nilai nol, yang akan digunakan sebagai pembanding untuk mencari usia tertinggi dari kolom `$2`. Nantinya `max_age` akan diupdate dengan nilai usia yang lebih tinggi, serta menyimpan nama penumpang tersebut yang ada di kolom `$1` pada variable `oldest`.
+`umur_max` diinisiasi dengan nilai nol, yang akan digunakan sebagai pembanding untuk mencari usia tertinggi dari kolom `$2`. Nantinya `umur_max` akan diupdate dengan nilai usia yang lebih tinggi, serta menyimpan nama penumpang tersebut yang ada di kolom `$1` pada variable `tuwir`.
 
 #### Contoh output:
 <img src="/assets/soal1-c.png">
@@ -117,16 +140,16 @@ NR > 1 && !exit_flag {
 ### Sub-soal D
 Pada soal ini, diminta untuk menghitung rata-rata usia seluruh penumpang serta memberikan output tanpa angka di belakang koma.
 ```bash
-NR > 1 && !exit_flag {
-    total_age += $2
+NR > 1 {
+    total_umur += $2
 }
 ```
 
-`total_age` menghitung jumlah usia seluruh penumpang yang ada pada kolom `$2` setiap kali AWK membaca tiap baris.
+`total_umur` menghitung jumlah usia seluruh penumpang yang ada pada kolom `$2` setiap kali AWK membaca tiap baris.
 
 ```bash
 else if (opsi == "d") {
-    print ("Rata-rata usia penumpang adalah " sprintf("%.0f", total_age / count_passenger) " tahun")
+    print ("Rata-rata usia penumpang adalah " sprintf("%.0f", total_umur / jml_penumpang) " tahun")
     }
 ```
 Output kemudian dibulatkan agar tidak memiliki angka dibelakang koma menggunakan `sprintf(%.0f)`.
@@ -137,13 +160,13 @@ Output kemudian dibulatkan agar tidak memiliki angka dibelakang koma menggunakan
 ### Sub-soal E
 Pada soal ini, diminta untuk menghitung jumlah penumpang yang memilih Business Class.
 ```bash
-NR > 1 && !exit_flag {
+NR > 1 {
     if ($3 == "Business") {
-        business_passenger++
+        konglomerat++
     }
 }
 ```
-Pada kolom gerbong `$3`, apabila penumpang memilih Business Class, maka nilai dari `business_passenger` akan bertambah 1 setiap penumpang.
+Pada kolom gerbong `$3`, apabila penumpang memilih Business Class, maka nilai dari `konglomerat` akan bertambah 1 setiap penumpang.
 
 #### Contoh output:
 <img src="/assets/soal1-e.png">
@@ -469,7 +492,7 @@ while true; do
 done
 ```
 
-Pada `status`, user diminta untuk menginput status penghuni (aktif/menunggak), karena bersifat `case-sensitive` input user akan dinormalisasi menggunakan fungsi `normalize_status()`.
+Pada `status`, user diminta untuk menginput status penghuni (aktif/menunggak), karena bersifat `case-sensitive` input user akan dinormalisasi menggunakan fungsi `normalize_status()` yang akan mengubah input lowercase ataupun uppercase menjadi `Aktif` atau `Menunggak`.
 
 ```bash
 normalize_status() {

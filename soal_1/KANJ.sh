@@ -7,55 +7,51 @@ BEGIN {
     if (opsi != "a" && opsi != "b" && opsi != "c" && opsi != "d" && opsi != "e") {
         print ("Soal tidak dikenali. Gunakan a, b, c, d, atau e.")
         print ("Contoh penggunaan: awk -f file.sh data.csv a")
-        exit_flag = 1 # mencegah user salah input opsi
         exit 1
     }
     
     # delete argumen kedua agar awk tidak menganggap argv2 sebagai file
     delete ARGV[2]
-    max_age = 0
+    umur_max = 0
 }
 
 # NR buat ignore header atau baris pertama CSV
-NR > 1 && !exit_flag {
+NR > 1 {
     gsub(/\r/, "", $0) # hapus \r (enter) jadi string kosong 
 
-    count_passenger++
+    jml_penumpang++
     
-    carriage[$4] = 1 # gerbong unik
+    gerbong_unik[$4] = 1 # gerbong unik
     
-    if ($2 > max_age) {
-        max_age = $2
-        oldest = $1
+    if ($2 > umur_max) {
+        umur_max = $2
+        tuwir = $1
     }
     
-    total_age += $2
+    total_umur += $2
     
     if ($3 == "Business") {
-        business_passenger++
+        konglomerat++
     }
 }
 
 END {
-    # jika terdapat error
-    if (exit_flag) exit
-    
     if (opsi == "a") {
-        print ("Jumlah seluruh penumpang KANJ adalah " count_passenger " orang")
+        print ("Jumlah seluruh penumpang KANJ adalah " jml_penumpang " orang")
     } 
     else if (opsi == "b") {
-        total_carriage = 0
-        for (i in carriage) total_carriage++
-        print ("Jumlah gerbong penumpang KANJ adalah " total_carriage)
+        jml_gerbong = 0
+        for (i in gerbong_unik) jml_gerbong++
+        print ("Jumlah gerbong penumpang KANJ adalah " jml_gerbong)
     } 
     else if (opsi == "c") {
-        print (oldest " adalah penumpang kereta tertua dengan usia " max_age " tahun")
+        print (tuwir " adalah penumpang kereta tertua dengan usia " umur_max " tahun")
     } 
     else if (opsi == "d") {
         # sprintf "%.0f" dipakai untuk membulatkan tanpa angka di belakang koma
-        print ("Rata-rata usia penumpang adalah " sprintf("%.0f", total_age / count_passenger) " tahun")
+        print ("Rata-rata usia penumpang adalah " sprintf("%.0f", total_umur / jml_penumpang) " tahun")
     } 
     else if (opsi == "e") {
-        print ("Jumlah penumpang business class ada " business_passenger " orang")
+        print ("Jumlah penumpang business class ada " konglomerat " orang")
     }
 }
