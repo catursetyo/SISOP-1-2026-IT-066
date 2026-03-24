@@ -288,7 +288,29 @@ Digunakan untuk menampilkan program [kost_slebew.sh](https://github.com/caturset
 
 ### Inisialisasi Database
 
+Karena program ini mengharuskan data penghuni tersimpan dalam database lokal, maka diperlukan inisialisasi file dan directory untuk databasenya.
 
+```bash
+DATA_FILE="data/penghuni.csv"
+LOG_FILE="log/tagihan.log"
+REKAP_FILE="rekap/laporan_bulanan.txt"
+SAMPAH_FILE="sampah/history_hapus.csv"
+
+SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+
+init_storage() {
+    mkdir -p "data" "log" "rekap" "sampah"
+
+    [[ -f "$DATA_FILE" ]] || echo "Nama,No_Kamar,Harga_Sewa,Tanggal_Masuk,Status" > "$DATA_FILE"
+    [[ -f "$LOG_FILE" ]] || : > "$LOG_FILE"
+    [[ -f "$REKAP_FILE" ]] || : > "$REKAP_FILE"
+    [[ -f "$SAMPAH_FILE" ]] || echo "Nama,No_Kamar,Harga_Sewa,Tanggal_Masuk,Status,Tanggal_Hapus" > "$SAMPAH_FILE"
+}
+```
+
+Pada program ini, [penghuni.csv](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv) digunakan sebagai database utama yang menyimpan data penghuni saat ini.
+
+`SCRIPT_PATH` sebagai path absolute yang akan membantu cron job mendapatkan path dari [kost_slebew.sh](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/kost_slebew.sh).
 
 ### Implementasi Fitur
 
@@ -376,3 +398,36 @@ tambah_penghuni() {
     pause
 }
 ```
+
+`local variable` dideklarasikan pada awal fungsi, seluruh input field dari fungsi tersebut dimasukkan ke dalam infinite loop yang akan terus berulang sampai user memasukkan format input yang tepat.
+
+```bash
+while true; do
+    read -r -p "Masukkan Nama: " nama
+    if [[ -z "$nama" ]]; then
+        echo ">>> Error: Nama tidak boleh kosong!"
+    else
+        break
+    fi
+done
+```
+
+Pada bagian `nama`, user dapat menginput nilai/karakter apapun asalkan tidak kosong.
+
+```bash
+while true; do
+    read -r -p "Masukkan Kamar: " kamar
+    if [[ ! "$kamar" =~ ^[0-9]+$ ]]; then
+        echo ">>> Error: Nomor kamar harus berupa angka positif!"
+        continue
+    fi
+
+    if awk -F',' -v kamar="$kamar" 'NR > 1 && $2 == kamar {dipake=1} END {exit !dipake}' "$DATA_FILE"; then
+        echo ">>> Error: Kamar $kamar sudah ditempati!"
+        continue
+    fi
+    break
+done
+```
+
+User hanya dapat menginput nomor kamar berupa angka positif. Setelah itu, nomor kamar divalidasi menggunakan `awk` dengan memeriksa kolom kedua pada file [penghuni.csv]((https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_3/data/penghuni.csv)). Jika nomor kamar ditemukan, maka variabel `dipake` akan diaktifkan, sehingga `awk` memberikan feedback berupa exit status `0`, sehingga pesan error akan muncul.

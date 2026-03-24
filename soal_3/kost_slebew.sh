@@ -120,7 +120,7 @@ tambah_penghuni() {
             continue
         fi
 
-        if awk -F',' -v kamar="$kamar" 'NR > 1 && $2 == kamar {exit 0} END {exit 1}' "$DATA_FILE"; then
+        if awk -F',' -v kamar="$kamar" 'NR > 1 && $2 == kamar {dipake=1} END {exit !dipake}' "$DATA_FILE"; then
             echo ">>> Error: Kamar $kamar sudah ditempati!"
             continue
         fi
