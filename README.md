@@ -821,9 +821,6 @@ Fitur ini memberikan kemampuan kepada user untuk menampilkan sekaligus menyimpan
 ```bash
 cetak_laporan_keuangan() {
     clear
-    echo "=============================================================="
-    echo "                 LAPORAN KEUANGAN AMBATUKOST                  "
-    echo "=============================================================="
 
     local total_aktif total_tunggakan jumlah_kamar daftar_tunggakan harga_raw prefix
 
