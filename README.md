@@ -880,14 +880,15 @@ format_rupiah() {
         return
     fi
 
-    local rev formatted=""
-    rev=$(echo "$number" | rev)
-    while [[ -n "$rev" ]]; do
-        formatted+="${rev:0:3}."
-        rev="${rev:3}"
-    done
-    formatted="${formatted%.}"
-    echo "Rp$(echo "$formatted" | rev)"
+    awk -v n="$number" 'BEGIN {
+        s = n
+        out = ""
+        while (length(s) > 3) {
+            out = "." substr(s, length(s)-2, 3) out
+            s = substr(s, 1, length(s)-3)
+        }
+        print "Rp" s out
+    }'
 }
 ```
 
