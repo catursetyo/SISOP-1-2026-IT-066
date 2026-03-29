@@ -48,8 +48,7 @@ END {
         print (tuwir " adalah penumpang kereta tertua dengan usia " umur_max " tahun")
     } 
     else if (opsi == "d") {
-        # sprintf "%.0f" dipakai untuk membulatkan tanpa angka di belakang koma
-        print ("Rata-rata usia penumpang adalah " sprintf("%.0f", total_umur / jml_penumpang) " tahun")
+        print ("Rata-rata usia penumpang adalah " int(total_umur / jml_penumpang) " tahun")
     } 
     else if (opsi == "e") {
         print ("Jumlah penumpang business class ada " konglomerat " orang")
