@@ -179,6 +179,21 @@ Sehingga, berdasarkan data dari [passenger.csv](https://github.com/catursetyo/SI
 - Rata-rata usia: **38 tahun**
 - Penumpang Business class: **74 orang**
 
+### Revisi
+
+Pada opsi `d` terdapat penyesuaian untuk hasil dari rata-rata usia penumpang.
+
+```bash
+else if (opsi == "d") {
+    print ("Rata-rata usia penumpang adalah " int(total_umur / jml_penumpang) " tahun")
+```
+
+Sehingga output yang dihasilkan adalah:
+
+<img src="/assets/soal1-rev.png">
+
+dengan menghapus desimal.
+
 ## Soal 2: EKSPEDISI PESUGIHAN GUNUNG KAWI - MAS AMBA
 
 Pada soal ini, diminta untuk mengekstrak data koordinat dari file [gsxtrack.json](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_2/ekspedisi/peta-gunung-kawi/gsxtrack.json), menyusunnya ke file [titik-penting.txt](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_2/ekspedisi/peta-gunung-kawi/titik-penting.txt), lalu menghitung koordinat pusat untuk memperoleh lokasi pusaka dan menyimpannya pada file [posisipusaka.txt](https://github.com/catursetyo/SISOP-1-2026-IT-066/blob/main/soal_2/ekspedisi/peta-gunung-kawi/posisipusaka.txt).
