@@ -2,9 +2,10 @@
                  LAPORAN KEUANGAN AMBATUKOST                  
 ==============================================================
 Total pemasukan (Aktif) : Rp10.625
-Total tunggakan         : Rp200.000
-Jumlah kamar terisi     : 3
+Total tunggakan         : Rp400.000
+Jumlah kamar terisi     : 4
 --------------------------------------------------------------
 Daftar penghuni menunggak:
 - mambo (Kamar 222): Rp200.000
+- agus (Kamar 225): Rp200.000
 ==============================================================
